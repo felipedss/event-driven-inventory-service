@@ -1,4 +1,0 @@
-com/platform/inventoryservice/controller/InventoryControllerTest.class
-com/platform/inventoryservice/InventoryServiceApplicationTests.class
-com/platform/inventoryservice/messaging/consumer/InventoryCommandConsumerTest.class
-com/platform/inventoryservice/service/InventoryServiceTest.class

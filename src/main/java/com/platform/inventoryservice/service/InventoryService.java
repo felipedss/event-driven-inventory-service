@@ -29,8 +29,8 @@ public class InventoryService {
           command.getOrderId(),
           new InventoryReservationFailedEvent(
               command.getOrderId(),
-                  command.getProductId(),
-                  "Product not found: " + command.getProductId()));
+              command.getProductId(),
+              "Product not found: " + command.getProductId()));
       return;
     }
 
@@ -45,8 +45,8 @@ public class InventoryService {
           command.getOrderId(),
           new InventoryReservationFailedEvent(
               command.getOrderId(),
-                  command.getProductId(),
-                  "Insufficient stock for product: " + command.getProductId()));
+              command.getProductId(),
+              "Insufficient stock for product: " + command.getProductId()));
       return;
     }
 

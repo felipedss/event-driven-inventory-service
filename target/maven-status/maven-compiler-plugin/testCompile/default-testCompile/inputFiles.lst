@@ -1,0 +1,4 @@
+/Users/felipe/Workspace/event-driven-inventory-service/src/test/java/com/platform/inventoryservice/InventoryServiceApplicationTests.java
+/Users/felipe/Workspace/event-driven-inventory-service/src/test/java/com/platform/inventoryservice/controller/InventoryControllerTest.java
+/Users/felipe/Workspace/event-driven-inventory-service/src/test/java/com/platform/inventoryservice/messaging/consumer/InventoryCommandConsumerTest.java
+/Users/felipe/Workspace/event-driven-inventory-service/src/test/java/com/platform/inventoryservice/service/InventoryServiceTest.java

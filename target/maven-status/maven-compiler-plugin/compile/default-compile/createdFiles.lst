@@ -1,0 +1,15 @@
+com/platform/inventoryservice/messaging/producer/KafkaProducerService.class
+com/platform/inventoryservice/config/KafkaConsumerConfig.class
+com/platform/inventoryservice/model/InventoryItem.class
+com/platform/inventoryservice/exception/GlobalExceptionHandler.class
+com/platform/inventoryservice/config/KafkaProducerConfig.class
+com/platform/inventoryservice/event/outbound/InventoryReservedEvent.class
+com/platform/inventoryservice/messaging/consumer/InventoryCommandConsumer.class
+com/platform/inventoryservice/repository/InventoryRepository.class
+com/platform/inventoryservice/event/inbound/ReserveInventoryCommand.class
+com/platform/inventoryservice/service/InventoryService.class
+com/platform/inventoryservice/controller/InventoryController.class
+com/platform/inventoryservice/event/outbound/InventoryReservationFailedEvent.class
+com/platform/inventoryservice/InventoryServiceApplication.class
+com/platform/inventoryservice/model/InventoryItem$InventoryItemBuilder.class
+com/platform/inventoryservice/exception/InventoryItemNotFoundException.class

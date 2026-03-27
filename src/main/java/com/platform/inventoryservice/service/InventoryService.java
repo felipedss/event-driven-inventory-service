@@ -1,12 +1,19 @@
 package com.platform.inventoryservice.service;
 
+import com.platform.inventoryservice.event.inbound.ReleaseInventoryCommand;
 import com.platform.inventoryservice.event.inbound.ReserveInventoryCommand;
+import com.platform.inventoryservice.event.outbound.InventoryReleasedEvent;
+import com.platform.inventoryservice.event.outbound.InventoryReleaseFailedEvent;
 import com.platform.inventoryservice.event.outbound.InventoryReservationFailedEvent;
 import com.platform.inventoryservice.event.outbound.InventoryReservedEvent;
 import com.platform.inventoryservice.exception.InventoryItemNotFoundException;
 import com.platform.inventoryservice.messaging.producer.KafkaProducerService;
 import com.platform.inventoryservice.model.InventoryItem;
+import com.platform.inventoryservice.model.Reservation;
+import com.platform.inventoryservice.model.ReservationStatus;
 import com.platform.inventoryservice.repository.InventoryRepository;
+import com.platform.inventoryservice.repository.ReservationRepository;
+import java.util.Optional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -17,9 +24,16 @@ import org.springframework.stereotype.Service;
 public class InventoryService {
 
   private final InventoryRepository inventoryRepository;
+  private final ReservationRepository reservationRepository;
   private final KafkaProducerService kafkaProducer;
 
   public void reserveInventory(ReserveInventoryCommand command) {
+    if (reservationRepository.findByOrderId(command.getOrderId()).isPresent()) {
+      log.warn(
+          "Inventory already reserved for orderId={}, skipping duplicate", command.getOrderId());
+      return;
+    }
+
     InventoryItem item = inventoryRepository.findByProductId(command.getProductId()).orElse(null);
 
     if (item == null) {
@@ -52,6 +66,15 @@ public class InventoryService {
 
     item.setAvailableQuantity(item.getAvailableQuantity() - command.getQuantity());
     inventoryRepository.save(item);
+
+    reservationRepository.save(
+        Reservation.builder()
+            .orderId(command.getOrderId())
+            .productId(command.getProductId())
+            .quantity(command.getQuantity())
+            .status(ReservationStatus.ACTIVE)
+            .build());
+
     log.info(
         "Inventory reserved for orderId={}, productId={}, quantity={}",
         command.getOrderId(),
@@ -63,6 +86,71 @@ public class InventoryService {
         command.getOrderId(),
         new InventoryReservedEvent(
             command.getOrderId(), command.getProductId(), command.getQuantity()));
+  }
+
+  public void releaseInventory(ReleaseInventoryCommand command) {
+    Optional<Reservation> reservationOpt =
+        reservationRepository.findByOrderId(command.getOrderId());
+
+    if (reservationOpt.isEmpty()) {
+      log.warn(
+          "No reservation found for orderId={}, already released or never reserved — treating as success",
+          command.getOrderId());
+      kafkaProducer.send(
+          "order.inventory.released",
+          command.getOrderId(),
+          new InventoryReleasedEvent(command.getOrderId(), command.getProductId()));
+      return;
+    }
+
+    Reservation reservation = reservationOpt.get();
+
+    if (reservation.getStatus() == ReservationStatus.RELEASED) {
+      log.warn(
+          "Inventory already released for orderId={}, skipping duplicate", command.getOrderId());
+      return;
+    }
+
+    if (reservation.getStatus() == ReservationStatus.RELEASE_FAILED) {
+      log.warn(
+          "Inventory release previously failed for orderId={}, skipping duplicate",
+          command.getOrderId());
+      return;
+    }
+
+    InventoryItem item = inventoryRepository.findByProductId(reservation.getProductId()).orElse(null);
+
+    if (item == null) {
+      log.warn(
+          "Cannot release inventory — product not found: productId={}", reservation.getProductId());
+      reservation.setStatus(ReservationStatus.RELEASE_FAILED);
+      reservationRepository.save(reservation);
+      kafkaProducer.send(
+          "order.inventory.release.failed",
+          command.getOrderId(),
+          new InventoryReleaseFailedEvent(
+              command.getOrderId(),
+              reservation.getProductId(),
+              "Product not found: " + reservation.getProductId()));
+      return;
+    }
+
+    item.setAvailableQuantity(item.getAvailableQuantity() + reservation.getQuantity());
+    inventoryRepository.save(item);
+
+    reservation.setStatus(ReservationStatus.RELEASED);
+    reservationRepository.save(reservation);
+
+    log.info(
+        "Inventory released for orderId={}, productId={}, quantity={}",
+        command.getOrderId(),
+        reservation.getProductId(),
+        reservation.getQuantity());
+
+    kafkaProducer.send(
+        "order.inventory.released",
+        command.getOrderId(),
+        new InventoryReleasedEvent(command.getOrderId(), reservation.getProductId()));
   }
 
   public InventoryItem getByProductId(String productId) {

@@ -6,6 +6,7 @@ import com.platform.inventoryservice.service.InventoryService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.kafka.annotation.KafkaListener;
+import org.springframework.kafka.support.Acknowledgment;
 import org.springframework.stereotype.Service;
 
 @Slf4j
@@ -16,22 +17,24 @@ public class InventoryCommandConsumer {
   private final InventoryService inventoryService;
 
   @KafkaListener(topics = "order.inventory.reserve", groupId = "${spring.kafka.consumer.group-id}")
-  public void handleReserveInventory(ReserveInventoryCommand command) {
+  public void handleReserveInventory(ReserveInventoryCommand command, Acknowledgment ack) {
     log.info(
         "Received ReserveInventoryCommand for orderId={}, productId={}, quantity={}",
         command.getOrderId(),
         command.getProductId(),
         command.getQuantity());
     inventoryService.reserveInventory(command);
+    ack.acknowledge();
   }
 
   @KafkaListener(topics = "order.inventory.release", groupId = "${spring.kafka.consumer.group-id}")
-  public void handleReleaseInventory(ReleaseInventoryCommand command) {
+  public void handleReleaseInventory(ReleaseInventoryCommand command, Acknowledgment ack) {
     log.info(
         "Received ReleaseInventoryCommand for orderId={}, productId={}, quantity={}",
         command.getOrderId(),
         command.getProductId(),
         command.getQuantity());
     inventoryService.releaseInventory(command);
+    ack.acknowledge();
   }
 }

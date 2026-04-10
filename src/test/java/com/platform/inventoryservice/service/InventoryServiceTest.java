@@ -10,8 +10,8 @@ import static org.mockito.Mockito.when;
 
 import com.platform.inventoryservice.event.inbound.ReleaseInventoryCommand;
 import com.platform.inventoryservice.event.inbound.ReserveInventoryCommand;
-import com.platform.inventoryservice.event.outbound.InventoryReleasedEvent;
 import com.platform.inventoryservice.event.outbound.InventoryReleaseFailedEvent;
+import com.platform.inventoryservice.event.outbound.InventoryReleasedEvent;
 import com.platform.inventoryservice.event.outbound.InventoryReservationFailedEvent;
 import com.platform.inventoryservice.event.outbound.InventoryReservedEvent;
 import com.platform.inventoryservice.exception.InventoryItemNotFoundException;
@@ -202,7 +202,8 @@ class InventoryServiceTest {
 
     ArgumentCaptor<Reservation> reservationCaptor = ArgumentCaptor.forClass(Reservation.class);
     verify(reservationRepository).save(reservationCaptor.capture());
-    assertThat(reservationCaptor.getValue().getStatus()).isEqualTo(ReservationStatus.RELEASE_FAILED);
+    assertThat(reservationCaptor.getValue().getStatus())
+        .isEqualTo(ReservationStatus.RELEASE_FAILED);
 
     ArgumentCaptor<InventoryReleaseFailedEvent> captor =
         ArgumentCaptor.forClass(InventoryReleaseFailedEvent.class);
@@ -239,7 +240,8 @@ class InventoryServiceTest {
     command.setQuantity(3);
 
     when(reservationRepository.findByOrderId("order-1"))
-        .thenReturn(Optional.of(reservationFor("order-1", "prod-1", 3, ReservationStatus.RELEASED)));
+        .thenReturn(
+            Optional.of(reservationFor("order-1", "prod-1", 3, ReservationStatus.RELEASED)));
 
     inventoryService.releaseInventory(command);
 

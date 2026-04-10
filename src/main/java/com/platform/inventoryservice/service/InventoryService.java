@@ -2,8 +2,8 @@ package com.platform.inventoryservice.service;
 
 import com.platform.inventoryservice.event.inbound.ReleaseInventoryCommand;
 import com.platform.inventoryservice.event.inbound.ReserveInventoryCommand;
-import com.platform.inventoryservice.event.outbound.InventoryReleasedEvent;
 import com.platform.inventoryservice.event.outbound.InventoryReleaseFailedEvent;
+import com.platform.inventoryservice.event.outbound.InventoryReleasedEvent;
 import com.platform.inventoryservice.event.outbound.InventoryReservationFailedEvent;
 import com.platform.inventoryservice.event.outbound.InventoryReservedEvent;
 import com.platform.inventoryservice.exception.InventoryItemNotFoundException;
@@ -118,7 +118,8 @@ public class InventoryService {
       return;
     }
 
-    InventoryItem item = inventoryRepository.findByProductId(reservation.getProductId()).orElse(null);
+    InventoryItem item =
+        inventoryRepository.findByProductId(reservation.getProductId()).orElse(null);
 
     if (item == null) {
       log.warn(
